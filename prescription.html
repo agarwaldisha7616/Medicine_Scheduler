@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prescription</title>
+    <style>
+        .prescription-container {
+            width: 210mm;
+            height: 297mm;
+            margin: 0 auto;
+            padding: 20px;
+            border: 1px solid black;
+            font-family: Arial, sans-serif;
+            position: relative;
+        }
+        .header, .footer {
+            text-align: center;
+        }
+        .details {
+            margin: 20px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        table, th, td {
+            border: 1px solid black;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+
+        /* Fixed column widths to prevent overflow */
+        table th:nth-child(2), table td:nth-child(2) {
+            width: 35%; /* Adjust width for dosage */
+        }
+        table th:nth-child(3), table td:nth-child(3) {
+            width: 20%; /* Adjust width for duration */
+        }
+
+        .advice {
+            margin-top: 20px;
+            font-weight: bold;
+        }
+        .advice-text {
+            margin-top: 5px;
+            font-weight: normal;
+        }
+        .signature-container {
+            margin-top: 20px;
+            text-align: left;
+        }
+
+        .signature {
+            border: 1px solid black;
+            width: 200px;
+            height: 100px;
+            margin-top: 10px;
+        }
+        #clear-signature {
+            margin-top: 10px;
+        }
+        .download-btn {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 10px 20px;
+            background-color: #AA0000;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            border-radius: 20px; /* Rounded edges */
+        }
+
+        .download-btn:hover {
+            background-color: darkred;
+        }
+    </style>
+</head>
+<body>
+    <div class="prescription-container">
+        <div class="header">
+            <h1>Prescription</h1>
+            <p>Doctor: Dr. XYZ</p>
+            <p>Date: <span id="date"></span></p>
+        </div>
+
+        <div class="details">
+            <h2>Patient Details</h2>
+            <p>Patient Name: John Doe</p>
+            <p>Disease Name: <span id="disease-name"></span></p>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Medicine Name</th>
+                    <th>Dosage</th>
+                    <th>Duration</th>
+                </tr>
+            </thead>
+            <tbody id="medicine-list">
+                <!-- Medicine rows will be added here dynamically -->
+            </tbody>
+        </table>
+
+        <!-- Advice Section -->
+        <div class="advice">
+            Advice Given:
+            <p id="advice-text" class="advice-text"></p>
+        </div>
+
+        <!-- Signature Section -->
+        <div class="signature-container">
+            <p>Doctor's Signature:</p>
+            <canvas id="signature-pad" class="signature"></canvas>
+            <button id="clear-signature">Clear Signature</button>
+        </div>
+
+        <!-- Red Download Button -->
+        <button id="download-pdf" class="download-btn">Download Prescription as PDF</button>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+    <script>
+        // Load data from localStorage
+        const diseaseName = localStorage.getItem('diseaseName');
+        const medicines = JSON.parse(localStorage.getItem('medicines'));
+        const doctorDescription = localStorage.getItem('doctorDescription');
+
+        // Populate the prescription with the fetched data
+        document.getElementById('disease-name').innerText = diseaseName;
+        document.getElementById('date').innerText = new Date().toLocaleDateString();
+        document.getElementById('advice-text').innerText = doctorDescription;
+
+        // Populate the medicine table
+        const medicineList = document.getElementById('medicine-list');
+        medicines.forEach(medicine => {
+            const row = `<tr>
+                <td>${medicine.name}</td>
+                <td>${medicine.dosage}</td>
+                <td>${medicine.duration}</td>  
+            </tr>`;
+            medicineList.innerHTML += row;
+        });
+
+        // Initialize Signature Pad
+        const canvas = document.getElementById('signature-pad');
+        const signaturePad = new SignaturePad(canvas);
+
+        // Clear the signature pad
+        document.getElementById('clear-signature').addEventListener('click', function() {
+            signaturePad.clear();
+        });
+
+        // Download prescription as PDF
+        document.getElementById('download-pdf').addEventListener('click', function () {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            doc.text("Prescription", 105, 10, null, null, 'center');
+            doc.text("Doctor: Dr. XYZ", 20, 30);
+            doc.text("Patient Name: John Doe", 20, 40);
+            doc.text("Disease Name: " + diseaseName, 20, 50);
+
+            // Add table headers
+            doc.text("Medicine", 20, 70);
+            doc.text("Dosage", 90, 70);
+            doc.text("Duration", 160, 70);
+
+            // Add medicine rows
+            medicines.forEach((medicine, index) => {
+                const yPosition = 80 + (index * 10);
+                doc.text(medicine.name, 20, yPosition);
+                doc.text(medicine.dosage, 90, yPosition);
+                doc.text(medicine.duration, 160, yPosition);
+            });
+
+            // Add advice section
+            doc.text("Advice Given:", 20, 100 + (medicines.length * 10));
+            doc.text(doctorDescription, 20, 110 + (medicines.length * 10), { maxWidth: 170 });
+
+            // Add signature image
+            if (!signaturePad.isEmpty()) {
+                const signatureImage = signaturePad.toDataURL();
+                doc.addImage(signatureImage, 'PNG', 150, 130 + (medicines.length * 10), 50, 25); // Adjust the position as needed
+            }
+
+            doc.save('prescription.pdf');
+        });
+    </script>
+</body>
+</html>

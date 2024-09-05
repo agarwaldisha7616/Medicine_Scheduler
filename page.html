@@ -13,24 +13,54 @@
         <h1 class="text-3xl font-bold text-teal-600 text-center mb-6">Medicine Scheduler</h1>
 
         <form id="medicine-form" class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
+            <!-- Disease Name Field -->
+            <div class="form-group">
+                <label for="disease-name" class="font-semibold">Disease Name:</label>
+                <input type="text" id="disease-name" class="mt-2 p-2 border border-gray-300 rounded-lg w-full" placeholder="Enter disease name" required>
+            </div>
+        
+            <!-- Medicine Name Field -->
             <div class="form-group">
                 <label for="medicine-name" class="font-semibold">Medicine Name:</label>
-                <input type="text" id="medicine-name" class="mt-2 p-2 border border-gray-300 rounded-lg w-full" required>
+                <input type="text" id="medicine-name" class="mt-2 p-2 border border-gray-300 rounded-lg w-full" placeholder="Enter medicine name" required>
             </div>
-
+        
+            <!-- Dosage Field -->
+            <div class="form-group">
+                <label for="dosage" class="font-semibold">Dosage:</label>
+                <input type="text" id="dosage" class="mt-2 p-2 border border-gray-300 rounded-lg w-full" placeholder="e.g., 1 Morning, 1 Night (Before Food)" required>
+            </div>
+        
+            <!-- Duration Field -->
+            <div class="form-group">
+                <label for="duration" class="font-semibold">Duration:</label>
+                <input type="text" id="duration" class="mt-2 p-2 border border-gray-300 rounded-lg w-full" placeholder="e.g., 2 Days(Total 4 Tab)" required>
+            </div>
+        
+            <!-- Date Field -->
             <div class="form-group">
                 <label for="medicine-date" class="font-semibold">Date:</label>
                 <input type="date" id="medicine-date" class="mt-2 p-2 border border-gray-300 rounded-lg w-full" required>
             </div>
-
+        
+            <!-- Time Field -->
             <div class="form-group">
                 <label for="medicine-time" class="font-semibold">Time:</label>
                 <input type="time" id="medicine-time" class="mt-2 p-2 border border-gray-300 rounded-lg w-full" required>
             </div>
-
+        
+            <!-- Add Medicine Button -->
             <button type="button" id="add-medicine-btn" class="bg-teal-500 text-white py-2 px-4 rounded-lg hover:bg-teal-600 w-full mt-4 sm:col-span-2">Add Medicine</button>
-        </form>
 
+            <!-- Add Description Field -->
+            <div class="form-group sm:col-span-2">
+                <label for="description" class="font-semibold">Doctor's Description:</label>
+                <textarea id="description" class="mt-2 p-2 border border-gray-300 rounded-lg w-full" rows="4" placeholder="Enter additional information or description"></textarea>
+            </div>
+            <!-- Add Description Button -->
+            <button type="button" id="add-description-btn" class="bg-teal-500 text-white py-2 px-4 rounded-lg hover:bg-teal-600 w-full mt-4 sm:col-span-2">Add Description</button>
+        </form>
+        
         <h2 class="text-2xl font-bold text-teal-600 text-center mb-4">Medicine Calendar</h2>
 
         <!-- Calendar initially hidden -->
@@ -52,24 +82,28 @@
             </tbody>
         </table>
 
+        <!-- Create Calendar Button -->
         <button type="button" id="create-calendar-btn" class="bg-[#2a9d8f] text-white py-2 px-4 rounded-lg hover:bg-[#55bda7] w-full mt-6">Create Calendar</button>
+
+        <!-- Generate Prescription Button -->
+        <button type="button" id="generate-prescription" class="bg-[#2a9d8f] text-white py-2 px-4 rounded-lg hover:bg-[#3abf9e] w-full mt-4">Generate Prescription</button>
     </div>
 
     <script>
         const form = document.getElementById('medicine-form');
         const addBtn = document.getElementById('add-medicine-btn');
+        const addDescriptionBtn = document.getElementById('add-description-btn');
         const calendar = document.getElementById('calendar');
         const calendarBody = document.querySelector('#calendar tbody');
-        
-        // Updated time slots as per your requirement
+
         const timeSlots = [
-            '7-8 AM', '8-9 AM', '9-10 AM', '10-11 AM', 
-            '12-1 PM', 
-            '1-2 PM', '2-3 PM', '3-4 PM', '4-5 PM', '5-6 PM', 
-            '6-7 PM', '7-8 PM', '8-9 PM', '9-10 PM'
+            '7-8 AM', '8-9 AM', '9-10 AM', '10-11 AM',
+            '12-1 PM', '1-2 PM', '2-3 PM', '3-4 PM', '4-5 PM',
+            '5-6 PM', '6-7 PM', '7-8 PM', '8-9 PM', '9-10 PM'
         ];
 
         let medicines = []; // To store medicines before displaying them
+        let doctorDescription = ""; // To store the doctor's description
 
         function generateCalendar() {
             calendar.style.display = 'table'; // Show the calendar
@@ -113,10 +147,12 @@
 
         function addMedicine() {
             const medicineName = document.getElementById('medicine-name').value;
+            const dosage = document.getElementById('dosage').value;  // Capturing dosage
+            const duration = document.getElementById('duration').value;  // Capturing duration
             const medicineDate = new Date(document.getElementById('medicine-date').value);
             const medicineTime = document.getElementById('medicine-time').value;
 
-            if (!medicineName || !medicineDate || !medicineTime) {
+            if (!medicineName || !dosage || !duration || !medicineDate || !medicineTime) {
                 alert("Please fill in all fields.");
                 return;
             }
@@ -125,8 +161,14 @@
             const timeSlotIndex = timeSlots.findIndex(slot => slot.startsWith(medicineTime.split(":")[0]));
 
             if (dayOfWeek >= 1 && dayOfWeek <= 7 && timeSlotIndex !== -1) {
-                // Store the medicine data to be added later when calendar is generated
-                medicines.push({ name: medicineName, dayOfWeek, timeSlotIndex });
+                // Store the medicine data including dosage and duration
+                medicines.push({ 
+                    name: medicineName, 
+                    dosage: dosage,  // Save dosage
+                    duration: duration,  // Save duration
+                    dayOfWeek, 
+                    timeSlotIndex 
+                });
                 
                 // Show a success popup
                 alert(`${medicineName} has been added.`);
@@ -138,13 +180,32 @@
             }
         }
 
+        function addDescription() {
+            doctorDescription = document.getElementById('description').value;
+            if (doctorDescription) {
+                alert("Description has been added.");
+            } else {
+                alert("Please add a valid description.");
+            }
+        }
+
         addBtn.addEventListener('click', addMedicine);
+        addDescriptionBtn.addEventListener('click', addDescription);
 
         // Create a button to generate the calendar after all medicines are added
         const createCalendarBtn = document.getElementById('create-calendar-btn');
         createCalendarBtn.onclick = generateCalendar;
 
-        // Optionally, you can keep the calendar hidden until medicines are added and the calendar is generated
+        // Store the data and generate a prescription page
+        document.getElementById('generate-prescription').addEventListener('click', function () {
+            const diseaseName = document.getElementById('disease-name').value;
+            localStorage.setItem('diseaseName', diseaseName);
+            localStorage.setItem('medicines', JSON.stringify(medicines));
+            localStorage.setItem('doctorDescription', doctorDescription);
+
+            // Redirect to prescription page
+            window.location.href = 'prescription.html';
+        });
     </script>
 </body>
 
